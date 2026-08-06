@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GenomicLabRegister {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mrn                    String    @db.VarChar(100)
+  patient_name           String    @db.VarChar(255)
+  age_gender             String    @db.VarChar(50)
+  received_items         String?   @db.Text
+  block_no               String?   @db.VarChar(100)
+  cellularity            String?   @db.VarChar(255)
+  diagnosis              String?   @db.Text
+  emailed_status         Boolean   @default(false)
+  emailed_date           DateTime? @db.Timestamptz(6)
+  uploaded_report_status Boolean   @default(false)
+  uploaded_report_date   DateTime? @db.Timestamptz(6)
+  print_report_status    Boolean   @default(false)
+  print_report_date      DateTime? @db.Timestamptz(6)
+  others                 String?   @db.Text
+
+  mst_siteid             Int       @default(1)
+  status                 Boolean   @default(true)
+
+  created_at             DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime  @updatedAt @db.Timestamptz(6)
+  created_by             String?   @db.Uuid
+  updated_by             String?   @db.Uuid
+  deleted_by             String?   @db.Uuid
+  created_by_name        String?   @db.VarChar(255)
+  updated_by_name        String?   @db.VarChar(255)
+  deleted_by_name        String?   @db.VarChar(255)
+  deleted_at             DateTime? @db.Timestamptz(6)
+
+  @@index([mst_siteid])
+  @@index([deleted_at])
+  @@map("genomic_lab_register")
+}
