@@ -3,10 +3,11 @@ import * as GenomicLabModel from '../models/genomicLabModel.js';
 import * as HinaiService from './hinaiService.js';
 import { formatDate } from '../utils/response.js';
 
-const getUserDetails = (user, userProfile) => {
+const getUserDetails = (user, userProfile, body = {}) => {
   const userId = user?.id || userProfile?.id;
   const userName = user?.full_name || user?.name || userProfile?.full_name || 'Portal User';
-  return { userId, userName };
+  const siteId = user?.siteId || user?.site_id || user?.siteID || userProfile?.site_id || body.mst_siteid || body.siteId || 1;
+  return { userId, userName, siteId: Number(siteId) };
 };
 
 export const searchHimsPatients = async (query) => {
@@ -26,13 +27,18 @@ export const getRecordById = async (id) => {
 };
 
 export const createRecord = async (body, user, userProfile) => {
-  const { mrn, patient_name, age_gender, mst_siteid } = body;
-  if (!mrn || !patient_name || !age_gender || !mst_siteid) {
-    throw new Error("MRN, Patient Name, Age/Gender, and Site are required.");
+  const { userId, userName, siteId } = getUserDetails(user, userProfile, body);
+
+  const { mrn, patient_name, age_gender } = body;
+  if (!mrn || !patient_name || !age_gender) {
+    throw new Error("MRN, Patient Name, and Age/Gender are required.");
   }
 
-  const { userId, userName } = getUserDetails(user, userProfile);
-  return await GenomicLabModel.createGenomicLabRecord(body, userId, userName);
+  return await GenomicLabModel.createGenomicLabRecord(
+    { ...body, mst_siteid: siteId },
+    userId,
+    userName
+  );
 };
 
 export const updateRecord = async (id, body, user, userProfile) => {
