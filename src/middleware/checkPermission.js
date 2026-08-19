@@ -39,7 +39,8 @@ const checkPermission = (moduleKey, action) => {
       const hasPermission = userPermissions.some(p => {
         const pModule = (p.module_key || p.module || '').toUpperCase();
         const pAction = (p.permission || p.action || p.name || '').toUpperCase();
-        return pModule === String(moduleKey).toUpperCase() && pAction === String(action).toUpperCase();
+        const targetModule = String(moduleKey).toUpperCase();
+        return pModule === targetModule && pAction === String(action).toUpperCase();
       });
 
       if (hasPermission) {

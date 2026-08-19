@@ -2,7 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import genomicLabRoutes from './routes/genomicLabRoutes.js';
+import genomicServiceRoutes from './routes/genomicServiceRoutes.js';
+import permissionRoutes from './routes/permissionRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import { startHinaiScheduler } from './services/hinaiScheduler.js';
 
 dotenv.config();
 
@@ -30,8 +33,15 @@ app.use(`${API_BASE_PATH}/auth`, authRoutes);
 app.use('/api/auth', authRoutes);
 app.use(`${API_BASE_PATH}/genomiclabregister`, genomicLabRoutes);
 app.use('/api/genomiclabregister', genomicLabRoutes);
+app.use(`${API_BASE_PATH}/genomiclab`, genomicLabRoutes);
+app.use('/api/genomiclab', genomicLabRoutes);
 app.use(`${API_BASE_PATH}/genomic-lab`, genomicLabRoutes);
 app.use('/api/genomic-lab', genomicLabRoutes);
+
+app.use(`${API_BASE_PATH}/genomic-services`, genomicServiceRoutes);
+app.use('/api/genomic-services', genomicServiceRoutes);
+app.use(`${API_BASE_PATH}/permissions`, permissionRoutes);
+app.use('/api/permissions', permissionRoutes);
 
 // Health Check
 app.get(['/api/health', `${API_BASE_PATH}/health`], (req, res) => {
@@ -51,4 +61,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🧪 Zydus Lab API running at http://localhost:${PORT}`);
+  startHinaiScheduler();
 });

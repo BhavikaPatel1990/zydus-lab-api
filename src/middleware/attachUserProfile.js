@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import masterPool from '../config/masterDb.js';
 
 const AUTH_SERVICE_URL = (process.env.AUTH_SERVICE_URL || 'http://localhost:7000/sampark-api').replace(/\/$/, '');
 
@@ -19,7 +20,7 @@ const getUserProfileApiUrl = () => {
         : `${AUTH_SERVICE_URL}/api/user/profile`;
 };
 
-const fetchCentralSiteList = async (authHeader) => {
+export const fetchCentralSiteList = async (authHeader) => {
     const now = Date.now();
     if (siteCache.data.length > 0 && (now - siteCache.lastFetched) < 300000) {
         return siteCache.data;
@@ -48,8 +49,8 @@ const fetchCentralSiteList = async (authHeader) => {
     return siteCache.data;
 };
 
-const resolveDynamicSiteName = (sites, siteId, fallbackName) => {
-    if (fallbackName && String(fallbackName).trim()) {
+const resolveDynamicSiteName = async (sites, siteId, fallbackName) => {
+    if (fallbackName && String(fallbackName).trim() && String(fallbackName).trim() !== 'Zydus Hospital') {
         return String(fallbackName).trim();
     }
 
@@ -66,7 +67,21 @@ const resolveDynamicSiteName = (sites, siteId, fallbackName) => {
         }
     }
 
-    return 'Zydus Hospital';
+    if (siteId) {
+        try {
+            const masterRes = await masterPool.query(
+                `SELECT site_name FROM public.mst_sites WHERE id = $1 OR id::text = $1 LIMIT 1`,
+                [String(siteId)]
+            );
+            if (masterRes.rows && masterRes.rows.length > 0 && masterRes.rows[0].site_name) {
+                return masterRes.rows[0].site_name;
+            }
+        } catch (e) {
+            console.warn('[attachUserProfile] Master DB site name lookup notice:', e.message);
+        }
+    }
+
+    return fallbackName || 'Zydus Hospital Ahmedabad';
 };
 
 const attachUserProfile = async (req, res, next) => {
@@ -83,7 +98,7 @@ const attachUserProfile = async (req, res, next) => {
                 const decoded = jwt.decode(token);
                 if (decoded) {
                     const extractedSiteId = reqSiteId || decoded.site_id || decoded.siteId || decoded.site || 1;
-                    const extractedSiteName = resolveDynamicSiteName(centralSites, extractedSiteId, decoded.site_name || decoded.siteName);
+                    const extractedSiteName = await resolveDynamicSiteName(centralSites, extractedSiteId, decoded.site_name || decoded.siteName);
 
                     tokenUser = {
                         id: decoded.id || decoded.userId || decoded.user_id || 'usr-101',
@@ -113,7 +128,7 @@ const attachUserProfile = async (req, res, next) => {
 
                     const fetchedUser = data.userProfile || data.user || data;
                     const finalSiteId = Number(data.siteId || fetchedUser.site_id || reqSiteId || tokenUser?.site_id) || 1;
-                    const finalSiteName = resolveDynamicSiteName(centralSites, finalSiteId, data.siteName || fetchedUser.site_name || tokenUser?.site_name);
+                    const finalSiteName = await resolveDynamicSiteName(centralSites, finalSiteId, data.siteName || fetchedUser.site_name || tokenUser?.site_name);
 
                     req.userProfile = {
                         id: fetchedUser.id || fetchedUser.userId || tokenUser?.id || 'usr-101',
@@ -142,7 +157,7 @@ const attachUserProfile = async (req, res, next) => {
         }
 
         const fallbackSiteId = Number(reqSiteId) || 1;
-        const fallbackSiteName = resolveDynamicSiteName(centralSites, fallbackSiteId, null);
+        const fallbackSiteName = await resolveDynamicSiteName(centralSites, fallbackSiteId, null);
 
         req.userProfile = {
             id: 'usr-guest',

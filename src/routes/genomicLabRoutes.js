@@ -7,10 +7,14 @@ const router = express.Router();
 
 router.use(authorize);
 
-const MODULE_KEY = 'GENOMIC_LAB_REGISTER';
+const MODULE_KEY = 'GENOMIC_LAB';
 
-router.get('/patient-search', checkPermission(MODULE_KEY, 'READ'), GenomicLabController.searchHimsPatients);
-router.get('/patient-details', checkPermission(MODULE_KEY, 'READ'), GenomicLabController.getHimsPatientDetails);
+// HINAI Oracle Sync & Site Master Routes
+router.post('/sync-hinai', GenomicLabController.syncHinai);
+router.get('/sync-hinai', GenomicLabController.syncHinai);
+router.get('/sites', GenomicLabController.getSites);
+
+// Genomic Lab CRUD & Export Routes (Manual Entry Create, Update, Delete, Read, Export)
 router.get('/', checkPermission(MODULE_KEY, 'READ'), GenomicLabController.getAllRecords);
 router.get('/export', checkPermission(MODULE_KEY, 'EXPORT'), GenomicLabController.exportExcel);
 router.get('/:id', checkPermission(MODULE_KEY, 'READ'), GenomicLabController.getRecordById);

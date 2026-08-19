@@ -1,27 +1,24 @@
 import response from '../utils/response.js';
 import * as genomicLabService from '../services/genomicLabService.js';
 
-export const searchHimsPatients = async (req, res) => {
+export const syncHinai = async (req, res) => {
   try {
-    const { q } = req.query;
-    const patients = await genomicLabService.searchHimsPatients(q);
-    return response.success(res, "HIMS patient search completed", patients);
+    const result = await genomicLabService.syncHinaiOrdersToDb();
+    return response.success(res, "Hinai HIS Oracle data sync executed successfully", result);
   } catch (error) {
-    console.error("Error in searchHimsPatients:", error);
+    console.error("Error in syncHinai:", error);
     return response.serverError(res, error.message);
   }
 };
 
-export const getHimsPatientDetails = async (req, res) => {
+
+
+export const getSites = async (req, res) => {
   try {
-    const { mrn } = req.query;
-    const patient = await genomicLabService.getHimsPatientDetails(mrn);
-    if (!patient) {
-      return response.normalError(res, "Patient not found in HIMS");
-    }
-    return response.success(res, "HIMS patient details retrieved", patient);
+    const sites = await genomicLabService.getSites(req.headers.authorization);
+    return response.success(res, "Site list retrieved successfully", sites);
   } catch (error) {
-    console.error("Error in getHimsPatientDetails:", error);
+    console.error("Error in getSites:", error);
     return response.serverError(res, error.message);
   }
 };

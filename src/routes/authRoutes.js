@@ -1,27 +1,34 @@
 import express from 'express';
 import attachUserProfile from '../middleware/attachUserProfile.js';
 
+import { getUserLabPermissions } from '../services/permissionService.js';
+
 const router = express.Router();
 
 router.get('/me', attachUserProfile, async (req, res) => {
   try {
     const user = req.userProfile || {};
+    const effectiveUserId = user.id;
+
+    let userPerms = req.permissions || user.permissions || [];
+    if (!Array.isArray(userPerms) || userPerms.length === 0) {
+      userPerms = await getUserLabPermissions(effectiveUserId);
+    }
     return res.status(200).json({
       success: true,
       status: true,
       data: {
         user: {
-          id: user.id || user.userId || 'usr-101',
-          full_name: user.full_name || user.name || 'Bhavika Javiya',
-          employee_id: user.employee_id || user.emp_id || user.emp_code || '12308014',
-          site_id: req.siteId || user.site_id || 1,
-          site_name: req.siteName || user.site_name || user.siteName || 'Zydus Hospital Ahmedabad',
-          roles: user.roles || user.role || ['SUPER_ADMIN'],
+          id: effectiveUserId,
+          user_id: user.id || effectiveUserId,
+          emp_id: user.employee_id || effectiveUserId,
+          full_name: user.full_name,
+          site_id: req.siteId || user.site_id,
+          roles: user.roles || user.role || ['STAFF'],
         },
-        permissions: req.permissions || user.permissions || [],
+        permissions: userPerms,
         siteId: req.siteId || user.site_id || 1,
-        siteName: req.siteName || user.site_name || 'Zydus Hospital Ahmedabad',
-        allowed_modules: ['genomiclabregister']
+        allowed_modules: ['genomiclab']
       }
     });
   } catch (error) {

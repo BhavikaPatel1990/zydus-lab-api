@@ -68,6 +68,34 @@ async function main() {
   } else {
     console.log(`ℹ️ Table genomic_lab_register already has ${count} records, skipping seed.`);
   }
+
+  // Seed / Update Genomic Service Master Catalog
+  const defaultServices = [
+    { service_name: 'ZyGENE BRCA assay (somatic) (Only DNA)', service_code: 'NGS0000001', price: 10000.00, sample: 'FFPE', tat_time: '7 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZyGENE BRCA assay (germline)(Only DNA)', service_code: 'NGS0000002', price: 8000.00, sample: 'BLOOD', tat_time: '7 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZyGENE Onco Focus Assay - Solid 52 genes', service_code: 'NGS0000003', price: 15750.00, sample: 'FFPE', tat_time: '10 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZyGENE Onco Comprehensive Assay - Solid 161 genes', service_code: 'NGS0000004', price: 22000.00, sample: 'FFPE', tat_time: '14 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZyGENE Onco Plus Assay - 500 gene + TMB + MSI', service_code: 'NGS0000005', price: 47250.00, sample: 'FFPE', tat_time: '21 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZyGENE Neuro Profile (Histo Molecular)', service_code: 'NGS0000006', price: 32000.00, sample: 'FFPE', tat_time: '14 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZYGENE Neuro Profile 2', service_code: 'NGS0000007', price: 23100.00, sample: 'FFPE', tat_time: '14 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZYGENE Endometrial Histo-Molecular Profile*', service_code: 'NGS0000012', price: 28000.00, sample: 'FFPE', tat_time: '14 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZYGENE Endometrial Profile -2', service_code: 'NGS0000011', price: 25000.00, sample: 'FFPE', tat_time: '14 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZYGENE Whole Exome*', service_code: 'HEM0000155', price: 18000.00, sample: 'BLOOD', tat_time: '21 Days', mst_siteid: 1, created_by_name: 'System Admin' },
+    { service_name: 'ZyGENE Pharmecogenomics Single Gene Genotyping', service_code: 'NGS0000008', price: 4400.00, sample: 'BLOOD', tat_time: '5 Days', mst_siteid: 1, created_by_name: 'System Admin' }
+  ];
+
+  for (const s of defaultServices) {
+    await prisma.genomicServiceMaster.upsert({
+      where: { service_code: s.service_code },
+      update: {
+        tat_time: s.tat_time,
+        price: s.price,
+        sample: s.sample
+      },
+      create: s
+    });
+  }
+  console.log('✅ Synchronized 11 Genomic Service Master catalog records with fixed TAT Days!');
 }
 
 main()
