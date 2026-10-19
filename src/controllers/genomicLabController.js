@@ -3,7 +3,10 @@ import * as genomicLabService from '../services/genomicLabService.js';
 
 export const syncHinai = async (req, res) => {
   try {
-    const result = await genomicLabService.syncHinaiOrdersToDb();
+    const daysBack = req.query.daysBack
+      ? parseInt(req.query.daysBack, 10)
+      : parseInt(process.env.HINAI_SYNC_DAYS_BACK || '90', 10);
+    const result = await genomicLabService.syncHinaiOrdersToDb(daysBack);
     return response.success(res, "Hinai HIS Oracle data sync executed successfully", result);
   } catch (error) {
     console.error("Error in syncHinai:", error);

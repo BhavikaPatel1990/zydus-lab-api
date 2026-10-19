@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import genomicLabRoutes from './routes/genomicLabRoutes.js';
 import genomicServiceRoutes from './routes/genomicServiceRoutes.js';
+import histoServiceRoutes from './routes/histoServiceRoutes.js';
 import permissionRoutes from './routes/permissionRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import { startHinaiScheduler } from './services/hinaiScheduler.js';
@@ -40,6 +41,8 @@ app.use('/api/genomic-lab', genomicLabRoutes);
 
 app.use(`${API_BASE_PATH}/genomic-services`, genomicServiceRoutes);
 app.use('/api/genomic-services', genomicServiceRoutes);
+app.use(`${API_BASE_PATH}/histo-services`, histoServiceRoutes);
+app.use('/api/histo-services', histoServiceRoutes);
 app.use(`${API_BASE_PATH}/permissions`, permissionRoutes);
 app.use('/api/permissions', permissionRoutes);
 

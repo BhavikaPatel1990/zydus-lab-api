@@ -52,7 +52,7 @@ const buildDynamicSiteMap = (siteList = []) => {
   return dynamicMap;
 };
 
-export const syncHinaiOrdersToDb = async (daysBack = 30) => {
+export const syncHinaiOrdersToDb = async (daysBack = parseInt(process.env.HINAI_SYNC_DAYS_BACK || '90', 10)) => {
   console.log(`[Genomic Lab Service] Starting Hinai HIS Oracle Data Sync (Last ${daysBack} days)...`);
 
   // 1. Dynamically fetch active service records from Genomic Service Master table
@@ -61,8 +61,15 @@ export const syncHinaiOrdersToDb = async (daysBack = 30) => {
   });
   const serviceCodes = activeMasterServices.map(s => s.service_code).filter(Boolean);
 
+  // 1b. Dynamically fetch active service records from Histo Service Master table
+  const activeHistoMasters = await prisma.histoServiceMaster.findMany({
+    where: { status: true, deleted_at: null },
+    select: { service_code: true }
+  });
+  const histoServiceCodes = activeHistoMasters.map(s => s.service_code).filter(Boolean);
+
   // 2. Fetch Oracle HIS rows filtered by active service codes across daysBack window
-  const oracleRows = await HinaiOracleService.executeHinaiQuery(serviceCodes, daysBack);
+  const oracleRows = await HinaiOracleService.executeHinaiQuery(serviceCodes, daysBack, histoServiceCodes);
   const siteList = await fetchCentralSiteList();
   const dynamicSiteMap = buildDynamicSiteMap(siteList);
 
@@ -108,6 +115,7 @@ export const syncHinaiOrdersToDb = async (daysBack = 30) => {
     const sampleSendDate = String(row.SAMPLESEND_DATE || row.samplesend_date || '').trim();
     const sampleSendBy = String(row.SAMPLESENDBY || row.samplesendby || '').trim();
     const genomicServices = String(row.GENOMIC_SERVICES || row.genomic_services || row.HISTOPATH_SERVICES || row.histopath_services || serviceName || '').trim();
+    const histoServices = String(row.HISTO_SERVICES || row.histo_services || '').trim();
     const uploadedDate = String(row.UPLOADED_DATE || row.uploaded_date || '').trim();
     const rawSiteId = String(row.SITE_ID || '').trim();
 
@@ -151,6 +159,7 @@ export const syncHinaiOrdersToDb = async (daysBack = 30) => {
           ...(lbId && { lb_id: lbId }),
           ...(certifiedBy && { certified_by: certifiedBy }),
           ...(genomicServices && { genomic_services: genomicServices }),
+          ...(histoServices && { histo_services: histoServices }),
           expected_date: calculatedExpectedDate,
           ...(receivedDate && { received_date: receivedDate }),
           process_status: processStatus,
@@ -199,6 +208,7 @@ export const syncHinaiOrdersToDb = async (daysBack = 30) => {
           expected_date: calculatedExpectedDate,
           process_status: processStatus,
           genomic_services: genomicServices || null,
+          histo_services: histoServices || null,
           uploaded_report_status: Boolean(uploadedDate),
           uploaded_report_date: uploadedDate ? new Date(uploadedDate) : null,
           mst_siteid
@@ -320,6 +330,7 @@ export const generateExcelWorkbook = async (req) => {
     { header: "ZyGENE Number", key: "zygene_number", width: 18 },
     { header: "Service", key: "service_name", width: 22 },
     { header: "Genomic Service", key: "genomic_services", width: 22 },
+    { header: "Histo Service", key: "histo_services", width: 26 },
     { header: "MRN", key: "mrn", width: 15 },
     { header: "Patient Name", key: "patient_name", width: 22 },
     { header: "Age/Gender", key: "age_gender", width: 14 },
@@ -344,6 +355,7 @@ export const generateExcelWorkbook = async (req) => {
       zygene_number: String(row.zygene_number || ""),
       service_name: String(row.service_name || ""),
       genomic_services: String(row.genomic_services || row.histopath_services || ""),
+      histo_services: String(row.histo_services || ""),
       mrn: String(row.mrn || ""),
       patient_name: String(row.patient_name || ""),
       age_gender: String(row.age_gender || (row.age || row.gender ? `${row.age || ''} / ${row.gender || ''}`.trim() : "")),

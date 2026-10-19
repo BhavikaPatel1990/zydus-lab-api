@@ -53,6 +53,7 @@ export const buildWhereClause = (query = {}) => {
     statusFilter,
     process_status,
     serviceFilter,
+    histoFilter,
     emailedFilter,
     uploadedFilter,
     printFilter,
@@ -91,10 +92,34 @@ export const buildWhereClause = (query = {}) => {
     andConditions.push({
       OR: [
         { genomic_services: { contains: trimmedSvc, mode: 'insensitive' } },
+        { histo_services: { contains: trimmedSvc, mode: 'insensitive' } },
         { service_name: { contains: trimmedSvc, mode: 'insensitive' } },
         { service_code: { contains: trimmedSvc, mode: 'insensitive' } }
       ]
     });
+  }
+
+  if (histoFilter && histoFilter !== 'all' && histoFilter !== 'ALL') {
+    const trimmedHisto = String(histoFilter).trim();
+    if (trimmedHisto === 'with' || trimmedHisto === 'true') {
+      andConditions.push({
+        AND: [
+          { histo_services: { not: null } },
+          { histo_services: { not: '' } }
+        ]
+      });
+    } else if (trimmedHisto === 'without' || trimmedHisto === 'false') {
+      andConditions.push({
+        OR: [
+          { histo_services: null },
+          { histo_services: '' }
+        ]
+      });
+    } else {
+      andConditions.push({
+        histo_services: { contains: trimmedHisto, mode: 'insensitive' }
+      });
+    }
   }
 
   if (fromDate || toDate) {
@@ -150,6 +175,7 @@ export const buildWhereClause = (query = {}) => {
         { received_items: { contains: trimmed, mode: "insensitive" } },
         { zygene_number: { contains: trimmed, mode: "insensitive" } },
         { genomic_services: { contains: trimmed, mode: "insensitive" } },
+        { histo_services: { contains: trimmed, mode: "insensitive" } },
         { service_name: { contains: trimmed, mode: "insensitive" } },
         { service_code: { contains: trimmed, mode: "insensitive" } },
         { service_order_id: { contains: trimmed, mode: "insensitive" } },
@@ -323,6 +349,7 @@ export const createGenomicLabRecord = async (data, userId, userName) => {
     process_status,
     zygene_number,
     genomic_services,
+    histo_services,
     emailed_status,
     emailed_date,
     uploaded_report_status,
@@ -373,6 +400,7 @@ export const createGenomicLabRecord = async (data, userId, userName) => {
       process_status: effectiveProcessStatus,
       zygene_number: zygene_number || null,
       genomic_services: genomic_services || null,
+      histo_services: histo_services || null,
       emailed_status: Boolean(emailed_status),
       emailed_date: emailed_date ? new Date(emailed_date) : null,
       uploaded_report_status: effectiveUploadedStatus,
@@ -425,6 +453,7 @@ export const updateGenomicLabRecord = async (id, data, userId, userName) => {
     process_status,
     zygene_number,
     genomic_services,
+    histo_services,
     emailed_status,
     emailed_date,
     uploaded_report_status,
@@ -484,6 +513,7 @@ export const updateGenomicLabRecord = async (id, data, userId, userName) => {
       process_status: effectiveProcessStatus,
       ...(zygene_number !== undefined && { zygene_number: zygene_number || null }),
       ...(genomic_services !== undefined && { genomic_services: genomic_services || null }),
+      ...(histo_services !== undefined && { histo_services: histo_services || null }),
       ...(emailed_status !== undefined && { emailed_status: Boolean(emailed_status) }),
       ...(emailed_date !== undefined && { emailed_date: emailed_date ? new Date(emailed_date) : null }),
       ...(effectiveUploadedStatus !== undefined && { uploaded_report_status: effectiveUploadedStatus }),

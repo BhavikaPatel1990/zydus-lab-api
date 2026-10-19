@@ -16,8 +16,9 @@ export const startHinaiScheduler = () => {
 
     isSyncRunning = true;
     try {
-      console.log('[Hinai Scheduler] Running scheduled Oracle HIS sync...');
-      const res = await genomicLabService.syncHinaiOrdersToDb();
+      const daysBack = parseInt(process.env.HINAI_SYNC_DAYS_BACK || '90', 10);
+      console.log(`[Hinai Scheduler] Running scheduled Oracle HIS sync (Last ${daysBack} days)...`);
+      const res = await genomicLabService.syncHinaiOrdersToDb(daysBack);
       console.log(`[Hinai Scheduler] Sync Cycle Finished: Inserted: ${res.inserted}, Updated: ${res.updated}, Total: ${res.total}`);
     } catch (err) {
       console.error('[Hinai Scheduler Error]:', err.message);

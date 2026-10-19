@@ -96,6 +96,10 @@ async function main() {
     });
   }
   console.log('✅ Synchronized 11 Genomic Service Master catalog records with fixed TAT Days!');
+
+  // Seed Histo Service Master Catalog from CSV
+  const { seedHistoServiceMaster } = await import('./seedHistoServiceMaster.js');
+  await seedHistoServiceMaster();
 }
 
 main()

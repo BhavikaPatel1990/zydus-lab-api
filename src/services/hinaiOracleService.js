@@ -43,8 +43,8 @@ export const runHinaiQuery = async (sqlQuery, params = []) => {
 /**
  * Genomic Lab HINAI Fetcher
  */
-export const executeHinaiQuery = async (serviceCodes = [], daysBack = 30) => {
-  const sqlQuery = getGenomicLabHinaiQuery(serviceCodes, daysBack);
+export const executeHinaiQuery = async (serviceCodes = [], daysBack = 90, histoServiceCodes = []) => {
+  const sqlQuery = getGenomicLabHinaiQuery(serviceCodes, daysBack, histoServiceCodes);
   return await runHinaiQuery(sqlQuery);
 };
 
