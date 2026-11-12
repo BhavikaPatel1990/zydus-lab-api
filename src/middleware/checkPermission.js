@@ -31,17 +31,15 @@ const checkPermission = (moduleKey, action) => {
         return next();
       }
 
-      const userPermissions = user.permissions || user.user_permissions || [];
-      if (userPermissions === 'ALL_ACCESS' || process.env.NODE_ENV === 'development' || !Array.isArray(userPermissions) || userPermissions.length === 0) {
+      const userPermissions = req.permissions ?? user.permissions ?? user.user_permissions ?? {};
+      if (userPermissions === 'ALL_ACCESS') {
         return next();
       }
 
-      const hasPermission = userPermissions.some(p => {
-        const pModule = (p.module_key || p.module || '').toUpperCase();
-        const pAction = (p.permission || p.action || p.name || '').toUpperCase();
-        const targetModule = String(moduleKey).toUpperCase();
-        return pModule === targetModule && pAction === String(action).toUpperCase();
-      });
+      const actions = Array.isArray(userPermissions)
+        ? userPermissions.filter(p => String(p.module_key || p.module || '').toUpperCase() === String(moduleKey).toUpperCase()).map(p => String(p.permission || p.action || p.name || '').toUpperCase())
+        : userPermissions[String(moduleKey).toUpperCase()];
+      const hasPermission = Array.isArray(actions) && actions.includes(String(action).toUpperCase());
 
       if (hasPermission) {
         return next();

@@ -17,26 +17,19 @@ export const authorize = async (req, res, next) => {
     }
 
     const token = parts[1];
-    let payload = null;
-
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (e) {
-      payload = jwt.decode(token);
-    }
-
-    if (!payload && !req.userProfile) {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (!payload?.id && !payload?.userId) {
       return response.authError(res, "Unauthorized: Invalid or expired token");
     }
 
     req.user = {
-      id: payload?.id || payload?.userId || req.userProfile?.id || 'usr-101',
-      username: payload?.username || payload?.emp_id || req.userProfile?.employee_id || 'user',
-      full_name: payload?.full_name || payload?.name || req.userProfile?.full_name || 'Logged-in User',
-      roles: payload?.roles || payload?.role || req.userProfile?.roles || ['SUPER_ADMIN'],
-      permissions: payload?.permissions || 'ALL_ACCESS',
-      siteId: payload?.siteId || payload?.site_id || req.userProfile?.site_id || 1,
-      site_id: payload?.site_id || payload?.siteId || req.userProfile?.site_id || 1
+      id: payload.id || payload.userId,
+      username: payload.username || payload.emp_id || '',
+      full_name: payload.full_name || payload.name || '',
+      roles: payload.roles || payload.role || [],
+      permissions: payload?.permissions || {},
+      siteId: payload.siteId || payload.site_id || null,
+      site_id: payload.site_id || payload.siteId || null
     };
 
     next();
